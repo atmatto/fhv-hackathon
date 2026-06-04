@@ -1,0 +1,16 @@
+[project]
+name = "proj1-claude"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.136.3",
+    "joblib>=1.5.3",
+    "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "scikit-learn>=1.9.0",
+    "shap>=0.52.0",
+    "uvicorn>=0.48.0",
+    "xgboost>=3.2.0",
+]
