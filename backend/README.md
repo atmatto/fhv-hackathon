@@ -11,12 +11,14 @@ uv run api.py
 
 ## API endpoints
 
-| Method | Path              | Description                                  |
-|--------|-------------------|----------------------------------------------|
-| GET    | `/`               | Health check, model metadata, SHAP ranking   |
-| GET    | `/features`       | All accepted fields with units & importance  |
-| POST   | `/predict`        | CVD probability for a patient                |
-| POST   | `/predict/explain`| Probability + per-feature SHAP attributions  |
+| Method | Path                  | Description                                  |
+|--------|-----------------------|----------------------------------------------|
+| GET    | `/`                   | Health check, model metadata, SHAP ranking   |
+| GET    | `/features`           | All accepted fields with units & importance  |
+| POST   | `/predict`            | CVD probability for a patient                |
+| POST   | `/predict/explain`    | Probability + per-feature SHAP attributions  |
+| GET    | `/mortality/features` | Accepted features for the mortality model    |
+| POST   | `/mortality/predict`  | CVD death risk by horizon & survival curve   |
 
 All input fields are **optional** — missing values are median-imputed by the
 pipeline. More fields → more accurate prediction.
@@ -69,6 +71,61 @@ The `/predict/explain` response includes a full SHAP breakdown:
 - **`shap_values`** — each feature's additive contribution to CVD probability
 - **`top_risk_drivers`** — features pushing the prediction up
 - **`top_protective_factors`** — features pulling it down
+
+### CVD Mortality Prediction
+
+```bash
+curl -s -X POST http://localhost:8000/mortality/predict \
+  -H "Content-Type: application/json" \
+  -d '\''{
+    "age": 80,
+    "sbp": 170,
+    "htn_dx": 1,
+    "diabetes_dx": 1,
+    "creatinine": 1.8
+  }'\'' | python -m json.tool
+```
+
+**Response:**
+```json
+{
+    "cvd_index": 0.9819,
+    "horizon_cvd_death_risk": {
+        "1y": 0.0099,
+        "5y": 0.0593,
+        "10y": 0.1177
+    },
+    "median_years_to_cvd_death": null,
+    "survival_curve": {
+        "0": 1.0,
+        "1": 0.9901,
+        "2": 0.9805,
+        "3": 0.97,
+        "4": 0.9561,
+        "5": 0.9407,
+        "6": 0.9285,
+        "7": 0.9172,
+        "8": 0.9056,
+        "9": 0.8942,
+        "10": 0.8823,
+        "11": 0.8674,
+        "12": 0.862,
+        "13": 0.854,
+        "14": 0.854,
+        "15": 0.854
+    },
+    "risk_band": "moderate",
+    "recommend_doctor_visit": false
+}
+```
+
+The `/mortality/predict` response provides:
+- **`cvd_index`** — importance-weighted CVD risk score (centered at 0)
+- **`horizon_cvd_death_risk`** — probability of CVD death at 1, 5, and 10 year horizons
+- **`median_years_to_cvd_death`** — median survival time if cumulative risk crosses 50%
+- **`survival_curve`** — probability of surviving CVD death by year (up to 15 years)
+- **`risk_band`** — risk level category based on 10-year risk
+- **`recommend_doctor_visit`** — recommended flag when 10-year risk is high (>= 15%)
 
 ---
 
