@@ -11,3 +11,6 @@ wheels/
 
 model/.ipynb_checkpoints/
 model/data/
+.env
+*.env
+

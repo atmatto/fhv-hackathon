@@ -1,11 +1,28 @@
 import os
+import json
 import numpy as np
 import pandas as pd
 import joblib
-from typing import Optional
+from typing import Optional, List
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+try:
+    from groq import Groq
+    GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+    if not GROQ_API_KEY:
+        raise ValueError("GROQ_API_KEY is not set in environment or .env file")
+    groq_client = Groq(api_key=GROQ_API_KEY)
+except (ImportError, ValueError) as e:
+    groq_client = None
+    print(f"  Warning: Groq client could not be initialized: {e}")
 
 BUNDLE_PATH = os.environ.get("CVD_MODEL_PATH", "../model/cvd_model_bundle.joblib")
 
@@ -543,6 +560,163 @@ def mortality_predict(patient: MortalityPatientData):
         return _predict_mortality(person)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {e}")
+
+class LifestyleAdviceRequest(PatientData):
+    exercise_days_per_week: Optional[float] = Field(0, ge=0, le=7, description="Number of exercise days per week")
+    diet_quality:           Optional[str]   = Field("average", description="Diet quality: poor/average/good")
+    alcohol_units_per_week: Optional[float] = Field(0, ge=0,       description="Alcohol units per week")
+    stress_level:           Optional[str]   = Field("moderate", description="Stress level: low/moderate/high")
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    patient_data: LifestyleAdviceRequest
+    history: List[ChatMessage]
+    message: str
+
+def _build_ai_user_profile(patient: LifestyleAdviceRequest) -> dict:
+    sex_str = "female" if patient.female == 1.0 else "male" if patient.female == 0.0 else "not specified"
+    smoking_map = {0: "never", 1: "former", 2: "current"}
+    smoking_str = smoking_map.get(patient.smoking, "not specified")
+    diabetes_str = "yes" if patient.diabetes_dx == 1.0 else "no" if patient.diabetes_dx == 0.0 else "not specified"
+    family_hx_str = "yes" if patient.family_history == 1.0 else "no" if patient.family_history == 0.0 else "not specified"
+
+    return {
+        "age": patient.age,
+        "sex": sex_str,
+        "bmi": patient.bmi,
+        "systolic_bp": patient.sbp,
+        "diastolic_bp": patient.dbp,
+        "cholesterol_total": patient.total_chol,
+        "hdl_cholesterol": patient.hdl,
+        "smoker": smoking_str,
+        "diabetic": diabetes_str,
+        "family_history": family_hx_str,
+        "exercise_days_per_week": patient.exercise_days_per_week,
+        "diet_quality": patient.diet_quality,
+        "alcohol_units_per_week": patient.alcohol_units_per_week,
+        "stress_level": patient.stress_level,
+        "sleep_hours": patient.sleep_hours,
+        "sedentary_minutes_per_day": patient.sedentary_min,
+    }
+
+def _get_risk_predictions_context(patient: LifestyleAdviceRequest) -> tuple[dict, str]:
+    X = patient_to_row(patient)
+    proba = float(MODEL.predict_proba(X)[0, 1])
+    prevalent_risk_lvl = "high" if proba >= 0.20 else "moderate" if proba >= 0.08 else "low"
+    
+    mort_person = {}
+    patient_dict = patient.model_dump()
+    for f in MORT_FEATURES:
+        if f in patient_dict and patient_dict[f] is not None:
+            mort_person[f] = patient_dict[f]
+            
+    mortality_pred = _predict_mortality(mort_person)
+    
+    context = {
+        "prevalent_cvd_risk": f"{proba:.1%}",
+        "prevalent_cvd_risk_category": prevalent_risk_lvl,
+        "mortality_10y_risk": f"{mortality_pred['horizon_cvd_death_risk']['10y']:.1%}",
+        "mortality_risk_category": mortality_pred['risk_band'],
+        "median_years_to_cvd_death": mortality_pred['median_years_to_cvd_death'] if mortality_pred['median_years_to_cvd_death'] is not None else "undefined"
+    }
+    
+    context_str = f"""- Prevalent cardiovascular disease risk (chance of existing/past CVD): {context['prevalent_cvd_risk']} (Category: {context['prevalent_cvd_risk_category']})
+- 10-year CVD death (mortality) risk: {context['mortality_10y_risk']} (Category: {context['mortality_risk_category']})
+- Median years to CVD death: {context['median_years_to_cvd_death']}"""
+
+    return context, context_str
+
+@app.post("/predict/suggestions", summary="Get personalized lifestyle suggestions based on patient data and predictions")
+def predict_suggestions(patient: LifestyleAdviceRequest):
+    if not groq_client:
+        raise HTTPException(status_code=503, detail="Groq AI client is not available. Please verify the environment configuration.")
+
+    try:
+        user_profile = _build_ai_user_profile(patient)
+        _, predictions_context_str = _get_risk_predictions_context(patient)
+        
+        prompt = f"""
+You are a preventive-health advisor helping someone understand how to reduce their cardiovascular risk.
+
+## Patient profile
+{json.dumps(user_profile, indent=2)}
+
+## Risk assessment
+{predictions_context_str}
+
+## Your task
+Based ONLY on the specific data points above, suggest 3-5 concrete, prioritised lifestyle changes
+that would have the greatest measurable impact on reducing this person's cardiovascular risk.
+
+Rules:
+- Be specific to their numbers (e.g. if BMI is 31 mention weight; if smoker, mention cessation; if sedentary time is high, mention physical activity).
+- Skip factors that are already healthy for this person - don't suggest things they already do well.
+- For each suggestion include: what to change, why it matters for THEM, and one simple first step.
+- Keep the total response under 300 words.
+- Do NOT diagnose, prescribe medication, or replace a doctor's advice.
+- End with a one-sentence reminder to consult a healthcare professional.
+
+Format: numbered list, plain text, no markdown headers.
+"""
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=512,
+        )
+        suggestions = response.choices[0].message.content
+        return {
+            "suggestions": suggestions
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Groq API error: {e}")
+
+@app.post("/predict/chat", summary="Chat with an AI health coach about risk predictions and lifestyle tips")
+def predict_chat(request: ChatRequest):
+    if not groq_client:
+        raise HTTPException(status_code=503, detail="Groq AI client is not available. Please verify the environment configuration.")
+
+    try:
+        user_profile = _build_ai_user_profile(request.patient_data)
+        _, predictions_context_str = _get_risk_predictions_context(request.patient_data)
+        
+        system_prompt = f"""
+You are a friendly and knowledgeable preventive-health chatbot helping a patient understand their cardiovascular health results and make positive lifestyle changes.
+
+Here are the details of the patient you are chatting with:
+
+## Patient profile
+{json.dumps(user_profile, indent=2)}
+
+## Risk assessment
+{predictions_context_str}
+
+Instructions:
+1. Answer the patient's questions about their results, risk levels, and lifestyle recommendations.
+2. Be encouraging, empathetic, and clear. Avoid overly dense medical jargon.
+3. Be specific to their numbers. If they ask about physical activity, check their sedentary minutes and exercise days. If they ask about weight, check their BMI.
+4. Do NOT diagnose, prescribe medication, or give specific clinical treatments. Recommend they consult their doctor for clinical decisions.
+5. Keep answers concise (under 200 words per response).
+6. End with a subtle reminder if they ask about changing medication/diagnoses.
+"""
+        messages = [{"role": "system", "content": system_prompt}]
+        for msg in request.history:
+            messages.append({"role": msg.role, "content": msg.content})
+        messages.append({"role": "user", "content": request.message})
+        
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            max_tokens=512,
+        )
+        reply = response.choices[0].message.content
+        return {
+            "reply": reply
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Groq API error: {e}")
 
 if __name__ == "__main__":
     import uvicorn
