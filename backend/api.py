@@ -232,7 +232,7 @@ def predict_explain(patient: PatientData):
             ],
             "note": (
                 "SHAP values show each feature's additive contribution to the "
-                "log-odds of CVD. Positive = pushes prediction higher; "
+                "log-odds of cardiovascular disease. Positive = pushes prediction higher; "
                 "negative = pushes it lower."
             ),
         }
