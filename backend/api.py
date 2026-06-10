@@ -304,25 +304,44 @@ app.add_middleware(
 
 class PatientData(BaseModel):
     # All fields are optional - missing values are imputed by the pipeline.
-    age:            Optional[float] = Field(None, ge=18, le=120, description="Age in years")
-    female:         Optional[float] = Field(None, ge=0, le=1,   description="Sex: 1=female, 0=male")
-    race:           Optional[float] = Field(None,                description="Race/ethnicity code (1=Mexican American, 2=Other Hispanic, 3=NH White, 4=NH Black, 6=NH Asian, 7=Other)")
-    education:      Optional[float] = Field(None, ge=1, le=5,   description="Education level 1-5 (1=<9th grade ... 5=college grad)")
-    income:         Optional[float] = Field(None, ge=0,         description="Income-to-poverty ratio")
-    sbp:            Optional[float] = Field(None, ge=50, le=300, description="Systolic blood pressure (mmHg)")
-    dbp:            Optional[float] = Field(None, ge=20, le=200, description="Diastolic blood pressure (mmHg)")
-    pulse:          Optional[float] = Field(None, ge=20, le=300, description="Resting pulse (bpm)")
-    bmi:            Optional[float] = Field(None, ge=10, le=80,  description="Body mass index (kg/m2)")
-    waist:          Optional[float] = Field(None, ge=40, le=250, description="Waist circumference (cm)")
-    total_chol:     Optional[float] = Field(None, ge=50, le=600, description="Total cholesterol (mg/dL)")
-    hdl:            Optional[float] = Field(None, ge=10, le=200, description="HDL cholesterol (mg/dL)")
-    non_hdl:        Optional[float] = Field(None, ge=10, le=500, description="Non-HDL cholesterol (mg/dL). If omitted and total_chol+hdl are given, it is derived automatically.")
-    hba1c:          Optional[float] = Field(None, ge=2,  le=20,  description="Glycohemoglobin HbA1c (%)")
-    diabetes_dx:    Optional[float] = Field(None, ge=0, le=1,   description="Diabetes diagnosed: 1=yes, 0=no")
-    family_history: Optional[float] = Field(None, ge=0, le=1,   description="Family history of CVD: 1=yes, 0=no")
-    smoking:        Optional[float] = Field(None, ge=0, le=2,   description="Smoking status: 0=never, 1=former, 2=current")
-    sedentary_min:  Optional[float] = Field(None, ge=0,         description="Sedentary time (minutes/day)")
-    sleep_hours:    Optional[float] = Field(None, ge=0, le=24,  description="Usual sleep duration (hours/night)")
+    age: Optional[float] = Field(None, ge=18, le=120, description="Age in years")
+    female: Optional[float] = Field(None, ge=0, le=1, description="Sex: 1=female, 0=male")
+    race: Optional[float] = Field(None, description="Race/ethnicity code (1=Mexican American, 2=Other Hispanic, 3=NH White, 4=NH Black, 6=NH Asian, 7=Other)")
+    education: Optional[float] = Field(None, ge=1, le=5, description="Education level 1-5 (1=<9th grade ... 5=college grad)")
+    income: Optional[float] = Field(None, ge=0, description="Income-to-poverty ratio")
+    sbp: Optional[float] = Field(None, ge=50, le=300, description="Systolic blood pressure (mmHg)")
+    dbp: Optional[float] = Field(None, ge=20, le=200, description="Diastolic blood pressure (mmHg)")
+    pulse: Optional[float] = Field(None, ge=20, le=300, description="Resting pulse (bpm)")
+    bmi: Optional[float] = Field(None, ge=10, le=80, description="Body mass index (kg/m2)")
+    waist: Optional[float] = Field(None, ge=40, le=250, description="Waist circumference (cm)")
+    total_chol: Optional[float] = Field(None, ge=50, le=600, description="Total cholesterol (mg/dL)")
+    hdl: Optional[float] = Field(None, ge=10, le=200, description="HDL cholesterol (mg/dL)")
+    non_hdl: Optional[float] = Field(None, ge=10, le=500, description="Non-HDL cholesterol (mg/dL). If omitted and total_chol+hdl are given, it is derived automatically.")
+    hba1c: Optional[float] = Field(None, ge=2, le=20, description="Glycohemoglobin HbA1c (%)")
+    diabetes_dx: Optional[float] = Field(None, ge=0, le=1, description="Diabetes diagnosed: 1=yes, 0=no")
+    family_history: Optional[float] = Field(None, ge=0, le=1, description="Family history of CVD: 1=yes, 0=no")
+    smoking: Optional[float] = Field(None, ge=0, le=2, description="Smoking status: 0=never, 1=former, 2=current")
+    sedentary_min: Optional[float] = Field(None, ge=0, description="Sedentary time (minutes/day)")
+    sleep_hours: Optional[float] = Field(None, ge=0, le=24, description="Usual sleep duration (hours/night)")
+
+    # Mortality-specific clinical fields
+    htn_dx: Optional[float] = Field(None, ge=0, le=1, description="Diagnosed high blood pressure (1=yes, 0=no)")
+    highchol_dx: Optional[float] = Field(None, ge=0, le=1, description="Diagnosed high cholesterol (1=yes, 0=no)")
+    uacr: Optional[float] = Field(None, ge=0, description="Urine albumin-to-creatinine ratio (mg/g)")
+    creatinine: Optional[float] = Field(None, ge=0, description="Serum creatinine (mg/dL)")
+    ldl: Optional[float] = Field(None, ge=10, le=500, description="LDL cholesterol (mg/dL)")
+    uric_acid: Optional[float] = Field(None, ge=0, description="Uric acid (mg/dL)")
+    wbc: Optional[float] = Field(None, ge=0, description="White blood cell count (10^3/uL)")
+    crp: Optional[float] = Field(None, ge=0, description="High-sensitivity CRP (mg/L)")
+    insulin: Optional[float] = Field(None, ge=0, description="Fasting insulin (uU/mL)")
+    bun: Optional[float] = Field(None, ge=0, description="Blood urea nitrogen (mg/dL)")
+    glucose: Optional[float] = Field(None, ge=0, description="Fasting glucose (mg/dL)")
+
+    # Lifestyle / Chatbot-specific fields
+    exercise_days_per_week: Optional[float] = Field(0, ge=0, le=7, description="Number of exercise days per week")
+    diet_quality: Optional[str] = Field("average", description="Diet quality: poor/average/good")
+    alcohol_units_per_week: Optional[float] = Field(0, ge=0, description="Alcohol units per week")
+    stress_level: Optional[str] = Field("moderate", description="Stress level: low/moderate/high")
 
     model_config = {
         "json_schema_extra": {
@@ -337,52 +356,17 @@ class PatientData(BaseModel):
                 "hba1c": 7.1,
                 "diabetes_dx": 1,
                 "smoking": 1,
-                "family_history": 1
+                "family_history": 1,
+                "creatinine": 1.2,
+                "exercise_days_per_week": 2,
+                "diet_quality": "average",
+                "alcohol_units_per_week": 3,
+                "stress_level": "moderate",
+                "sleep_hours": 7.0
             }
         }
     }
 
-class MortalityPatientData(BaseModel):
-    # All 27 features are optional; missing values fall back to training medians.
-    htn_dx:        Optional[float] = Field(None, ge=0, le=1,   description="Diagnosed high blood pressure (0/1)")
-    diabetes_dx:   Optional[float] = Field(None, ge=0, le=1,   description="Diagnosed diabetes (0/1)")
-    highchol_dx:   Optional[float] = Field(None, ge=0, le=1,   description="Diagnosed high cholesterol (0/1)")
-    age:           Optional[float] = Field(None, ge=18, le=120, description="Age in years")
-    smoking:       Optional[float] = Field(None, ge=0, le=2,   description="Smoking status: 0=never, 1=former, 2=current")
-    total_chol:    Optional[float] = Field(None, ge=50, le=600, description="Total cholesterol (mg/dL)")
-    non_hdl:       Optional[float] = Field(None, ge=10, le=500, description="Non-HDL cholesterol (mg/dL)")
-    education:     Optional[float] = Field(None, ge=1, le=5,   description="Education level 1-5")
-    income:        Optional[float] = Field(None, ge=0,          description="Income-to-poverty ratio")
-    uacr:          Optional[float] = Field(None, ge=0,          description="Urine albumin-to-creatinine ratio")
-    creatinine:    Optional[float] = Field(None, ge=0,          description="Serum creatinine (mg/dL)")
-    sleep_hours:   Optional[float] = Field(None, ge=0, le=24,  description="Usual sleep hours")
-    ldl:           Optional[float] = Field(None, ge=10, le=500, description="LDL cholesterol (mg/dL)")
-    race:          Optional[float] = Field(None,                description="Race/ethnicity code (1=Mexican American, 2=Other Hispanic, 3=NH White, 4=NH Black, 6=NH Asian, 7=Other)")
-    sbp:           Optional[float] = Field(None, ge=50, le=300, description="Systolic blood pressure (mmHg)")
-    hdl:           Optional[float] = Field(None, ge=10, le=200, description="HDL cholesterol (mg/dL)")
-    uric_acid:     Optional[float] = Field(None, ge=0,          description="Uric acid (mg/dL)")
-    sedentary_min: Optional[float] = Field(None, ge=0,          description="Sedentary minutes/day")
-    dbp:           Optional[float] = Field(None, ge=20, le=200, description="Diastolic blood pressure (mmHg)")
-    wbc:           Optional[float] = Field(None, ge=0,          description="White blood cell count (10^3/uL)")
-    hba1c:         Optional[float] = Field(None, ge=2, le=20,  description="HbA1c (%)")
-    waist:         Optional[float] = Field(None, ge=40, le=250, description="Waist circumference (cm)")
-    bmi:           Optional[float] = Field(None, ge=10, le=80,  description="Body mass index (kg/m2)")
-    crp:           Optional[float] = Field(None, ge=0,          description="High-sensitivity CRP (mg/L)")
-    insulin:       Optional[float] = Field(None, ge=0,          description="Insulin (uU/mL)")
-    bun:           Optional[float] = Field(None, ge=0,          description="Blood urea nitrogen (mg/dL)")
-    glucose:       Optional[float] = Field(None, ge=0,          description="Fasting glucose (mg/dL)")
-
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "age": 80,
-                "sbp": 170,
-                "htn_dx": 1,
-                "diabetes_dx": 1,
-                "creatinine": 1.8
-            }
-        }
-    }
 
 def patient_to_row(patient: PatientData) -> pd.DataFrame:
     d = patient.model_dump()
@@ -554,29 +538,23 @@ def list_mortality_features():
     }
 
 @app.post("/mortality/predict", summary="Predict CVD death risk by horizon (1 / 5 / 10 years)")
-def mortality_predict(patient: MortalityPatientData):
+def mortality_predict(patient: PatientData):
     person = {k: v for k, v in patient.model_dump().items() if v is not None}
     try:
         return _predict_mortality(person)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction error: {e}")
 
-class LifestyleAdviceRequest(PatientData):
-    exercise_days_per_week: Optional[float] = Field(0, ge=0, le=7, description="Number of exercise days per week")
-    diet_quality:           Optional[str]   = Field("average", description="Diet quality: poor/average/good")
-    alcohol_units_per_week: Optional[float] = Field(0, ge=0,       description="Alcohol units per week")
-    stress_level:           Optional[str]   = Field("moderate", description="Stress level: low/moderate/high")
-
 class ChatMessage(BaseModel):
     role: str
     content: str
 
 class ChatRequest(BaseModel):
-    patient_data: LifestyleAdviceRequest
+    patient_data: PatientData
     history: List[ChatMessage]
     message: str
 
-def _build_ai_user_profile(patient: LifestyleAdviceRequest) -> dict:
+def _build_ai_user_profile(patient: PatientData) -> dict:
     sex_str = "female" if patient.female == 1.0 else "male" if patient.female == 0.0 else "not specified"
     smoking_map = {0: "never", 1: "former", 2: "current"}
     smoking_str = smoking_map.get(patient.smoking, "not specified")
@@ -602,19 +580,19 @@ def _build_ai_user_profile(patient: LifestyleAdviceRequest) -> dict:
         "sedentary_minutes_per_day": patient.sedentary_min,
     }
 
-def _get_risk_predictions_context(patient: LifestyleAdviceRequest) -> tuple[dict, str]:
+def _get_risk_predictions_context(patient: PatientData) -> tuple[dict, str]:
     X = patient_to_row(patient)
     proba = float(MODEL.predict_proba(X)[0, 1])
     prevalent_risk_lvl = "high" if proba >= 0.20 else "moderate" if proba >= 0.08 else "low"
-    
+
     mort_person = {}
     patient_dict = patient.model_dump()
     for f in MORT_FEATURES:
         if f in patient_dict and patient_dict[f] is not None:
             mort_person[f] = patient_dict[f]
-            
+
     mortality_pred = _predict_mortality(mort_person)
-    
+
     context = {
         "prevalent_cvd_risk": f"{proba:.1%}",
         "prevalent_cvd_risk_category": prevalent_risk_lvl,
@@ -622,7 +600,7 @@ def _get_risk_predictions_context(patient: LifestyleAdviceRequest) -> tuple[dict
         "mortality_risk_category": mortality_pred['risk_band'],
         "median_years_to_cvd_death": mortality_pred['median_years_to_cvd_death'] if mortality_pred['median_years_to_cvd_death'] is not None else "undefined"
     }
-    
+
     context_str = f"""- Prevalent cardiovascular disease risk (chance of existing/past CVD): {context['prevalent_cvd_risk']} (Category: {context['prevalent_cvd_risk_category']})
 - 10-year CVD death (mortality) risk: {context['mortality_10y_risk']} (Category: {context['mortality_risk_category']})
 - Median years to CVD death: {context['median_years_to_cvd_death']}"""
@@ -630,14 +608,14 @@ def _get_risk_predictions_context(patient: LifestyleAdviceRequest) -> tuple[dict
     return context, context_str
 
 @app.post("/predict/suggestions", summary="Get personalized lifestyle suggestions based on patient data and predictions")
-def predict_suggestions(patient: LifestyleAdviceRequest):
+def predict_suggestions(patient: PatientData):
     if not groq_client:
         raise HTTPException(status_code=503, detail="Groq AI client is not available. Please verify the environment configuration.")
 
     try:
         user_profile = _build_ai_user_profile(patient)
         _, predictions_context_str = _get_risk_predictions_context(patient)
-        
+
         prompt = f"""
 You are a preventive-health advisor helping someone understand how to reduce their cardiovascular risk.
 
@@ -681,7 +659,7 @@ def predict_chat(request: ChatRequest):
     try:
         user_profile = _build_ai_user_profile(request.patient_data)
         _, predictions_context_str = _get_risk_predictions_context(request.patient_data)
-        
+
         system_prompt = f"""
 You are a friendly and knowledgeable preventive-health chatbot helping a patient understand their cardiovascular health results and make positive lifestyle changes.
 
@@ -705,7 +683,7 @@ Instructions:
         for msg in request.history:
             messages.append({"role": msg.role, "content": msg.content})
         messages.append({"role": "user", "content": request.message})
-        
+
         response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages,
@@ -717,6 +695,108 @@ Instructions:
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Groq API error: {e}")
+
+@app.post("/predict/comprehensive", summary="Get prevalent CVD risk, mortality predictions, and lifestyle advice in a single call")
+def predict_comprehensive(patient: PatientData):
+    # 1. Prevalent CVD prediction
+    X = patient_to_row(patient)
+    try:
+        proba = float(MODEL.predict_proba(X)[0, 1])
+        prevalent_risk_lvl = "high" if proba >= 0.20 else "moderate" if proba >= 0.08 else "low"
+
+        d = patient.model_dump()
+        provided = []
+        imputed = []
+        for f in FEATURES:
+            if d.get(f) is not None:
+                provided.append(f)
+            else:
+                imputed.append(f)
+
+        prevalent_res = {
+            "cvd_probability":   round(proba, 3),
+            "risk_level":        prevalent_risk_lvl,
+            "label":             LABEL_DESC,
+            "features_provided": provided,
+            "features_imputed":  imputed
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prevalent CVD prediction error: {e}")
+
+    # 2. Mortality prediction
+    mort_person = {k: v for k, v in patient.model_dump().items() if v is not None and k in MORT_FEATURES}
+    try:
+        mortality_res = _predict_mortality(mort_person)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Mortality prediction error: {e}")
+
+    # 3. AI Suggestions (calls Groq, robust to failure)
+    ai_suggestions = {
+        "status": "disabled",
+        "suggestions": None,
+        "error_detail": None
+    }
+
+    if groq_client:
+        try:
+            user_profile = _build_ai_user_profile(patient)
+            predictions_context_str = f"""- Prevalent cardiovascular disease risk (chance of existing/past CVD): {proba:.1%} (Category: {prevalent_risk_lvl})
+- 10-year CVD death (mortality) risk: {mortality_res['horizon_cvd_death_risk']['10y']:.1%} (Category: {mortality_res['risk_band']})
+- Median years to CVD death: {mortality_res['median_years_to_cvd_death'] if mortality_res['median_years_to_cvd_death'] is not None else 'undefined'}"""
+
+            prompt = f"""
+You are a preventive-health advisor helping someone understand how to reduce their cardiovascular risk.
+
+## Patient profile
+{json.dumps(user_profile, indent=2)}
+
+## Risk assessment
+{predictions_context_str}
+
+## Your task
+Based ONLY on the specific data points above, suggest 3-5 concrete, prioritised lifestyle changes
+that would have the greatest measurable impact on reducing this person's cardiovascular risk.
+
+Rules:
+- Be specific to their numbers (e.g. if BMI is 31 mention weight; if smoker, mention cessation; if sedentary time is high, mention physical activity).
+- Skip factors that are already healthy for this person - don't suggest things they already do well.
+- For each suggestion include: what to change, why it matters for THEM, and one simple first step.
+- Keep the total response under 300 words.
+- Do NOT diagnose, prescribe medication, or replace a doctor's advice.
+- End with a one-sentence reminder to consult a healthcare professional.
+
+Format: numbered list, plain text, no markdown headers.
+"""
+            response = groq_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=512,
+            )
+            suggestions = response.choices[0].message.content
+            ai_suggestions = {
+                "status": "success",
+                "suggestions": suggestions,
+                "error_detail": None
+            }
+        except Exception as e:
+            ai_suggestions = {
+                "status": "error",
+                "suggestions": None,
+                "error_detail": str(e)
+            }
+    else:
+        ai_suggestions = {
+            "status": "disabled",
+            "suggestions": None,
+            "error_detail": "Groq client is not initialized (missing GROQ_API_KEY)"
+        }
+
+    return {
+        "prevalent_cvd": prevalent_res,
+        "mortality": mortality_res,
+        "ai_suggestions": ai_suggestions
+    }
+
 
 if __name__ == "__main__":
     import uvicorn
