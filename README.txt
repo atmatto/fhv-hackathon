@@ -33,5 +33,7 @@ Basic usage
 
 Data sets citations:
 
-NHANES:                             https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?Cycle=2021-2023
+NHANES:                             https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?BeginYear=2017
+  Cycles used:                      2017-2018
 NHANES NDI Linked Mortality Files:  https://www.cdc.gov/nchs/linked-data/mortality-files/index.html
+  Cycles used                       2007, 2009, 2011, 2013, 2015, 2017
