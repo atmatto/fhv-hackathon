@@ -29,3 +29,9 @@ Basic usage
     npm run dev
 
 5. Open the web app in browser (the URL should be visible in the console).
+
+
+Data sets citations:
+
+NHANES:                             https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?Cycle=2021-2023
+NHANES NDI Linked Mortality Files:  https://www.cdc.gov/nchs/linked-data/mortality-files/index.html
