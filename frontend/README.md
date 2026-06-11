@@ -1,4 +1,12 @@
-# Hackathon-website
+# Hackathon web app
+
+## Dependencies
+
+### Node.js and npm
+
+[Node.js installation guide](https://nodejs.org/en/download)
+
+If you don't have npm, just use the standalone installer. By installing node.js, npm will be installed in the bundle
 
 ## Recommended IDE Setup
 
@@ -10,16 +18,10 @@
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+## Running the app
 
 ```sh
 npm run dev
 ```
-#### don't forget to run the back-end
-check the README file in the back-end folder
 
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
+**Don't forget to run the backend**
