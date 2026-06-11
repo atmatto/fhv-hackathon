@@ -31,9 +31,15 @@ Basic usage
 5. Open the web app in browser (the URL should be visible in the console).
 
 
-Data sets citations:
+Dataset citations
+-----------------
 
-NHANES:                             https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?BeginYear=2017
-  Cycles used:                      2017-2018
-NHANES NDI Linked Mortality Files:  https://www.cdc.gov/nchs/linked-data/mortality-files/index.html
-  Cycles used                       2007, 2009, 2011, 2013, 2015, 2017
+NHANES
+(https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?BeginYear=2017)
+
+NHANES NDI Linked Mortality Files
+(https://www.cdc.gov/nchs/linked-data/mortality-files/index.html)
+
+Cycles:
+    model/       2017-2018
+    model-death/ 2007, 2009, 2011, 2013, 2015, 2017
